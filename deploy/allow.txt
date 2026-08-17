@@ -1,0 +1,24 @@
+# Hand-written allow rules for tripwire.
+#
+# One glob per line, matched against "host:port" and against the bare host.
+# Anything matching here is never alerted on, even if it is not in the learned
+# baseline. Reloaded automatically within one flush interval - no restart.
+#
+# Everything after # is a comment.
+
+# --- package registries: noisy during deploys, uninteresting ---
+# registry.npmjs.org:443
+# *.pypi.org:443
+# proxy.golang.org:443
+
+# --- AWS ---
+# *.amazonaws.com:443
+# 169.254.169.254:80          # instance metadata service
+
+# --- your own dependencies ---
+# api.stripe.com:443
+# *.sentry.io:443
+
+# Note: keys for destinations that were never resolved by DNS look like
+# "203.0.113.0/24:5432", so match them with the literal prefix, e.g.
+# 203.0.113.0/24:*

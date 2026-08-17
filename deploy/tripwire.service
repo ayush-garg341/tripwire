@@ -1,0 +1,44 @@
+[Unit]
+Description=tripwire - outbound connection baseline monitor
+Documentation=file:/usr/local/share/tripwire/ARCHITECTURE.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/tripwire -i eth0 -mode watch
+Restart=always
+RestartSec=5
+
+# Memory. The daemon must never be able to threaten the application it is
+# protecting, so the Go heap is capped well below the cgroup limit and the
+# cgroup limit is the backstop if anything ever escapes it.
+Environment=GOGC=50
+Environment=GOMEMLIMIT=48MiB
+MemoryMax=64M
+TasksMax=16
+
+# Hardening. tripwire needs CAP_NET_RAW to open the capture socket, and reads
+# /proc to attribute connections to processes. It never needs to write anywhere
+# except its own state directory.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/var/lib/tripwire
+CapabilityBoundingSet=CAP_NET_RAW CAP_DAC_READ_SEARCH CAP_SYS_PTRACE
+
+# Deliberately NOT set:
+#   ProcSubset=pid / ProtectProc=invisible - would hide the /proc entries that
+#     process attribution depends on, turning every alert into "unknown process".
+#   PrivateNetwork=true - there would be nothing left to watch.
+
+[Install]
+WantedBy=multi-user.target
